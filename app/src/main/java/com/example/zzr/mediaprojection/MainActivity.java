@@ -151,7 +151,7 @@ public class MainActivity extends Activity {
         mMediaRecorder.setOutputFile("/sdcard/DCIM/Camera/xiaokaxiu/capture.mp4");
    //     mMediaRecorder.setOutputFile();后期用来设置流
         mMediaRecorder.setVideoFrameRate(60);
-
+//new branch
 
 
     }
