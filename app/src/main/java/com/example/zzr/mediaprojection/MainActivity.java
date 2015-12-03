@@ -1,4 +1,5 @@
 package com.example.zzr.mediaprojection;
+//This is RTSP branch.
 
 import android.app.Activity;
 import android.content.Context;
@@ -8,6 +9,9 @@ import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
+import android.net.LocalServerSocket;
+import android.net.LocalSocket;
+import android.net.LocalSocketAddress;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -18,6 +22,9 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.util.Random;
 
 public class MainActivity extends Activity {
     private static final int PERMISSION_CODE = 1;
@@ -27,12 +34,30 @@ public class MainActivity extends Activity {
     private ToggleButton mToggleButton;
     private MediaProjectionCallback mMediaProjectionCallback;
     private MediaProjection mMediaProjection;
-    private static final String TAG = "MediaProjection_test";
+    private static final String TAG = "MediaProjection_main";
     private VirtualDisplay mVirtualDisplay;
-    private static final int DISPLAY_WIDTH = 1080;
-    private static final int DISPLAY_HEIGHT = 1920;
-    private int buffersize = 500000;
-    public MainActivity() {
+    public int buffersize = 500000;
+    protected LocalSocket mReceiver, mSender = null;
+    private LocalServerSocket mLss = null;
+    private int mSocketId = 0;
+    protected InetAddress mDestination;
+    protected H264Packetizer mPacketizer = null;
+    protected final static byte sPipeApi = 0;
+    private static VideoStream mVideoStream;
+    /** A LocalSocket will be used to feed the MediaRecorder object */
+    public static final byte PIPE_API_LS = 0x01;
+//    protected ParcelFileDescriptor[] mParcelFileDescriptors;
+//    protected ParcelFileDescriptor mParcelRead;
+//    protected ParcelFileDescriptor mParcelWrite;
+    /** A ParcelFileDescriptor will be used to feed the MediaRecorder object */
+    public static final byte PIPE_API_PFD = 0x02;
+    public static VideoStream getInstance()
+    {
+        if (mVideoStream == null)
+        {
+            mVideoStream = new VideoStream();
+        }
+        return mVideoStream;
     }
 
     @Override
@@ -43,19 +68,60 @@ public class MainActivity extends Activity {
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         mScreenDensity = metrics.densityDpi;
         mMediaRecorder = new MediaRecorder();
-        initRecorder();
         prepareRecorder();
+        try {
+            createSockets();
+        } catch (IOException e) {
+            finish();
+            e.printStackTrace();
+        }
+        initRecorder();
         mProjectionManager = (MediaProjectionManager)getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         mToggleButton = (ToggleButton)findViewById(R.id.toggleButton);
         mToggleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onToggleScreenShare(v);
+                try {
+                    onToggleScreenShare(v);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
         mMediaProjectionCallback=new MediaProjectionCallback();
+        // Prevents the phone from going to sleep mode
+        // PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+//        mWakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "com.example.zzr.mediaprojection.wakelock");
+        this.startService(new Intent(this,RtspServer.class));
     }
+    protected void createSockets() throws IOException {
 
+//        if (sPipeApi == PIPE_API_LS) {
+            Log.e(TAG, "in the createSockets");
+            final String LOCAL_ADDR = "net.majorkernelpanic.streaming-";
+
+            for (int i=0;i<10;i++) {
+                try {
+                    mSocketId = new Random().nextInt();
+                    mLss = new LocalServerSocket(LOCAL_ADDR+mSocketId);
+                    break;
+                } catch (IOException ignored) {}
+            }
+
+            mReceiver = new LocalSocket();
+            mReceiver.connect( new LocalSocketAddress(LOCAL_ADDR+mSocketId));
+            mReceiver.setReceiveBufferSize(500000);
+            mReceiver.setSoTimeout(3000);
+            mSender = mLss.accept();
+            mSender.setSendBufferSize(500000);
+//
+//        } else {
+//            Log.e(TAG, "parcelFileDescriptors createPipe version = Lollipop");
+//            mParcelFileDescriptors = ParcelFileDescriptor.createPipe();
+//            mParcelRead = new ParcelFileDescriptor(mParcelFileDescriptors[0]);
+//            mParcelWrite = new ParcelFileDescriptor(mParcelFileDescriptors[1]);
+//        }
+    }
     @Override
     public void onDestroy()
     {
@@ -66,8 +132,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    public void onToggleScreenShare(View view)
-    {
+    public void onToggleScreenShare(View view) throws IOException {
         if(((ToggleButton) view).isChecked())
         {
             shareScreen();
@@ -89,7 +154,7 @@ public class MainActivity extends Activity {
         mVirtualDisplay.release();
     }
 
-    public void shareScreen() {
+    public void shareScreen() throws IOException {
         if(mMediaProjection == null)
         {
             startActivityForResult(mProjectionManager.createScreenCaptureIntent(),PERMISSION_CODE);
@@ -97,12 +162,40 @@ public class MainActivity extends Activity {
         }
         mVirtualDisplay = createVirtualDisplay();
         mMediaRecorder.start();
+//        InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(mParcelRead);
+        getH264Stream();//delete the head of mp4 stream
+        /* put h264 stream to rtsp server*/
 
     }
 
+    public void getH264Stream() throws IOException {
+        InputStream is = mReceiver.getInputStream();
+//        InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(mParcelRead);
+        try {
+            byte buffer[] = new byte[4];
+            // Skip all atoms preceding mdat atom
+            while (!Thread.interrupted()) {
+                while (is.read() != 'm');
+                is.read(buffer,0,3);
+                if (buffer[0] == 'd' && buffer[1] == 'a' && buffer[2] == 't') break;
+            }
+        } catch (IOException e) {
+            Log.e(TAG,"Couldn't skip mp4 header :/");
+            e.printStackTrace();
+            throw e;
+        }
+        int[] a = getInstance().getDestinationPorts(); //use a to store mRtpPort and mRtcpPort.
+        mPacketizer.setDestination(mDestination, a[0], a[1]);
+ //       mPacketizer.setInputStream(mReceiver.getInputStream());
+        mPacketizer.setInputStream(is);
+//        mPacketizer.setInputStream(new ParcelFileDescriptor.AutoCloseOutputStream(mParcelRead));
+        mPacketizer.start();
+    }
+
+
     private VirtualDisplay createVirtualDisplay() {
         return mMediaProjection.createVirtualDisplay("MainActivity",
-                DISPLAY_WIDTH, DISPLAY_HEIGHT, mScreenDensity,
+                MP4Config.DISPLAY_WIDTH, MP4Config.DISPLAY_HEIGHT, mScreenDensity,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 mMediaRecorder.getSurface(), null /*Callbacks*/, null /*Handler*/);
     }
@@ -143,16 +236,16 @@ public class MainActivity extends Activity {
     public void initRecorder() {
 
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
         mMediaRecorder.setVideoEncodingBitRate(10000000);
-   //     mMediaRecorder.setVideoFrameRate(30);
-        mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
-        mMediaRecorder.setOutputFile("/sdcard/DCIM/Camera/xiaokaxiu/capture.mp4");
-   //     mMediaRecorder.setOutputFile();后期用来设置流
+        mMediaRecorder.setVideoSize(MP4Config.DISPLAY_WIDTH, MP4Config.DISPLAY_HEIGHT);
+   //     mMediaRecorder.setOutputFile("/sdcard/DCIM/Camera/xiaokaxiu/capture.mp4");
         mMediaRecorder.setVideoFrameRate(60);
-//new branch
-
+        mMediaRecorder.setOutputFile(mSender.getFileDescriptor());
+ //       mMediaRecorder.setOutputFile(mParcelWrite.getFileDescriptor());
+        mMediaRecorder.setMaxDuration(0);//called after setOutputFile before prepare,if zero or negation,disables the limit
+        mMediaRecorder.setMaxFileSize(0);//called after setOutputFile before prepare,if zero or negation,disables the limit
 
     }
 
@@ -195,5 +288,6 @@ public class MainActivity extends Activity {
             Log.i(TAG, "MediaProjection Stopped");
         }
     }
+
 
 }
