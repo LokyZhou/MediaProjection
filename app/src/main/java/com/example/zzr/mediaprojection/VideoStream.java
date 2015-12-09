@@ -1,7 +1,10 @@
 package com.example.zzr.mediaprojection;
 
 import android.content.SharedPreferences;
+import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
+import android.media.projection.MediaProjection;
+import android.media.projection.MediaProjectionManager;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
@@ -16,12 +19,17 @@ import java.io.InputStream;
  */
 public class VideoStream extends MediaStream
 {
+    private VirtualDisplay mVirtualDisplay;
+    private int mScreenDensity;
+    protected MediaRecorder mMediaRecorder;
+    private MediaProjectionManager mProjectionManager;
+    private MainActivity.MediaProjectionCallback mMediaProjectionCallback;
+    private MediaProjection mMediaProjection;
     private MP4Config mConfig;
     protected int mRtpPort = 0, mRtcpPort = 0;
     protected String mMimeType;
     protected String mEncoderName;
     protected int mEncoderColorFormat;
-    protected int mCameraImageFormat;
     protected int mMaxFps = 0;
     protected int mVideoEncoder = 0;
     protected SharedPreferences mSettings = null;
@@ -29,6 +37,7 @@ public class VideoStream extends MediaStream
     protected boolean mUpdated = false;
     protected int mRequestedOrientation = 0, mOrientation = 0;
     protected VideoQuality mQuality = mRequestedQuality.clone();
+    private boolean flag = false;
     public synchronized String getSessionDescription() throws IllegalStateException{
         if (mConfig == null) throw new IllegalStateException("You need to call configure() first !");
         return "m=video "+String.valueOf(getDestinationPorts()[0])+" RTP/AVP 96\r\n" +
@@ -43,13 +52,45 @@ public class VideoStream extends MediaStream
         };
     }
 
+    
+//
+//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        if (requestCode != PERMISSION_CODE) {
+//            Log.e(TAG, "Unknown request code: " + requestCode);
+//            return;
+//        }
+//        if (resultCode != RESULT_OK) {
+// //           Toast.makeText(this, "Screen Cast Permission Denied", Toast.LENGTH_SHORT).show();
+//            Log.d(TAG,"Screen Cast Permission Denied");
+//            flag=false;
+//            return;
+//        }
+//        mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
+//        mMediaProjection.registerCallback(mMediaProjectionCallback, null);
+//        mVirtualDisplay = createVirtualDisplay();
+//        mMediaRecorder.start();
+//    }
+//    private VirtualDisplay createVirtualDisplay() {
+//        return mMediaProjection.createVirtualDisplay("MainActivity",
+//                MP4Config.DISPLAY_WIDTH, MP4Config.DISPLAY_HEIGHT, mScreenDensity,
+//                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+//                mMediaRecorder.getSurface(), null /*Callbacks*/, null /*Handler*/);
+//    }
     @Override
     protected void encodeWithMediaRecorder() throws IOException {
 
             Log.d(TAG, "Video encoded using the MediaRecorder API");
             // We need a local socket to forward data output by the camera to the packetizer
             createSockets();
+//        if(mMediaProjection == null)
+//        {
+//            startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
+//            return;
+//        }
+//        mVirtualDisplay = createVirtualDisplay();
+//        mMediaRecorder.start();
             try {
+
                 mMediaRecorder = new MediaRecorder();
                 mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
                 mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
@@ -70,7 +111,6 @@ public class VideoStream extends MediaStream
                     fd = mSender.getFileDescriptor();
                 }
                 mMediaRecorder.setOutputFile(fd);
-
                 mMediaRecorder.prepare();
                 mMediaRecorder.start();
 
@@ -104,10 +144,9 @@ public class VideoStream extends MediaStream
             // The packetizer encapsulates the bit stream in an RTP stream and send it over the network
             mPacketizer.setInputStream(is);
             mPacketizer.start();
-
             mStreaming = true;
-    }
 
+    }
     @Override
     protected void encodeWithMediaCodec() throws IOException {
     Log.v(TAG,"using ecodeWithMediaCodec !!! WTF");
@@ -126,4 +165,12 @@ public class VideoStream extends MediaStream
         mRequestedOrientation = orientation;
         mUpdated = false;
     }
+
+//    class MyThread extends Thread{
+//        public void run(){
+//            Looper.prepare();
+//            Looper looper=Looper.getMainLooper();
+//            handler=new MainActivity.Myhandler(looper);
+//        }
+//    }
 }

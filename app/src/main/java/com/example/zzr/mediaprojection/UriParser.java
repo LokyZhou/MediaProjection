@@ -22,14 +22,12 @@ package com.example.zzr.mediaprojection;
 
 
 import android.content.ContentValues;
+import android.util.Log;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.util.Set;
-
 
 /**
  * This class parses URIs received by the RTSP server and configures a Session accordingly.
@@ -37,6 +35,7 @@ import java.util.Set;
 public class UriParser {
 
 	public final static String TAG = "UriParser";
+	
 	/**
 	 * Configures a Session according to the given URI.
 	 * Here are some examples of URIs that can be used to configure a Session:
@@ -51,24 +50,24 @@ public class UriParser {
 	 */
 	public static Session parse(String uri) throws IllegalStateException, IOException {
 		SessionBuilder builder = SessionBuilder.getInstance().clone();
-		byte videoApi = 0;
-
-        String[] queryParams = URI.create(uri).getQuery().split("&");
+		byte audioApi = 0, videoApi = 0;
+		Log.d(TAG, "in the parse : the uri is "+uri);
+//        String[] queryParams = URI.create(uri).getQuery().split("&");
         ContentValues params = new ContentValues();
-        for(String param:queryParams)
-        {
-            String[] keyValue = param.split("=");
-			String value = "";
-			try {
-				value = keyValue[1];
-			}catch(ArrayIndexOutOfBoundsException ignored){}
-
-            params.put(
-                    URLEncoder.encode(keyValue[0], "UTF-8"), // Name
-                    URLEncoder.encode(value, "UTF-8")  // Value
-            );
-
-        }
+//        for(String param:queryParams)
+//        {
+//            String[] keyValue = param.split("=");
+//			String value = "";
+//			try {
+//				value = keyValue[1];
+//			}catch(ArrayIndexOutOfBoundsException e){}
+//
+//            params.put(
+//                    URLEncoder.encode(keyValue[0], "UTF-8"), // Name
+//                    URLEncoder.encode(value, "UTF-8")  // Value
+//            );
+//
+//        }
 
 		if (params.size()>0) {
 
@@ -85,6 +84,7 @@ public class UriParser {
 					else 
 						builder.setFlashEnabled(false);
 				}
+
 
 
 				// MULTICAST -> the stream will be sent to a multicast group
@@ -118,10 +118,23 @@ public class UriParser {
 				else if (paramName.equalsIgnoreCase("videoapi")) {
 					if (paramValue!=null) {
 						if (paramValue.equalsIgnoreCase("mr")) {
-							videoApi = 0x01;
+							videoApi = MediaStream.MODE_MEDIARECORDER_API;
+						} else if (paramValue.equalsIgnoreCase("mc")) {
+							videoApi = MediaStream.MODE_MEDIACODEC_API;
 						}
 					}					
 				}
+				
+				// AUDIOAPI -> can be used to specify what api will be used to encode audio (the MediaRecorder API or the MediaCodec API)
+				else if (paramName.equalsIgnoreCase("audioapi")) {
+					if (paramValue!=null) {
+						if (paramValue.equalsIgnoreCase("mr")) {
+							audioApi = MediaStream.MODE_MEDIARECORDER_API;
+						} else if (paramValue.equalsIgnoreCase("mc")) {
+							audioApi = MediaStream.MODE_MEDIACODEC_API;
+						}
+					}					
+				}		
 
 				// TTL -> the client can modify the time to live of packets
 				// By default ttl=64
@@ -149,13 +162,11 @@ public class UriParser {
 					builder.setVideoQuality(quality).setVideoEncoder(SessionBuilder.VIDEO_H263);
 				}
 
-				// AMR
-
 			}
 
 		}
 
-		if (builder.getVideoEncoder()== SessionBuilder.VIDEO_NONE) {
+		if (builder.getVideoEncoder()==SessionBuilder.VIDEO_NONE  ) {
 			SessionBuilder b = SessionBuilder.getInstance();
 			builder.setVideoEncoder(b.getVideoEncoder());
 		}

@@ -76,7 +76,6 @@ public class MP4Config {
 		mPPS = stsdBox.getB64PPS();
 		mSPS = stsdBox.getB64SPS();
 		mProfilLevel = stsdBox.getProfileLevel();
-
 		mp4Parser.close();
 		
 	}

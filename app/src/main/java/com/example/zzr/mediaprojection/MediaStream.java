@@ -321,7 +321,7 @@ public abstract class MediaStream implements Stream {
 
 		if (sPipeApi == PIPE_API_LS) {
 			
-			final String LOCAL_ADDR = "net.majorkernelpanic.streaming-";
+			final String LOCAL_ADDR = "com.example.zzr.mediaprojection.streaming-";
 	
 			for (int i=0;i<10;i++) {
 				try {

@@ -34,7 +34,7 @@ public class RtspServer extends Service{
     public final static String TAG = "RtspServer";
 
     /** The server name that will appear in responses. */
-    public static String SERVER_NAME = "MajorKernelPanic RTSP Server";
+    public static String SERVER_NAME = "LokyZhou RTSP Server";
 
     /** Port used by default. */
     public static final int DEFAULT_RTSP_PORT = 8086;
@@ -194,7 +194,6 @@ public class RtspServer extends Service{
 
         // If the configuration is modified, the server will adjust
         mSharedPreferences.registerOnSharedPreferenceChangeListener(mOnSharedPreferenceChangeListener);
-
         start();
     }
     @Override
@@ -252,6 +251,8 @@ public class RtspServer extends Service{
      * @return A proper session
      */
     protected Session handleRequest(String uri, Socket client) throws IllegalStateException, IOException {
+        Log.d(TAG,"Client uri is " + uri);
+
         Session session = UriParser.parse(uri);
         session.setOrigin(client.getLocalAddress().getHostAddress());
         if (session.getDestination()==null) {
@@ -297,7 +298,6 @@ public class RtspServer extends Service{
                 this.join();
             } catch (InterruptedException ignore) {}
         }
-
     }
     // One thread per client
     class WorkerThread extends Thread implements Runnable {
@@ -395,17 +395,15 @@ public class RtspServer extends Service{
 			    /* ********************************* Method DESCRIBE ******************************** */
 			    /* ********************************************************************************** */
                 if (request.method.equalsIgnoreCase("DESCRIBE")) {
-
                     // Parse the requested URI and configure the session
                     mSession = handleRequest(request.uri, mClient);
                     mSessions.put(mSession, null);
                     mSession.syncConfigure();
-
                     String requestContent = mSession.getSessionDescription();
                     String requestAttributes =
                             "Content-Base: " + mClient.getLocalAddress().getHostAddress() + ":" + mClient.getLocalPort() + "/\r\n" +
                                     "Content-Type: application/sdp\r\n";
-
+                    Log.d(TAG,requestAttributes);
                     response.attributes = requestAttributes;
                     response.content = requestContent;
 
@@ -427,6 +425,7 @@ public class RtspServer extends Service{
                 /* ********************************** Method SETUP ********************************** */
                 /* ********************************************************************************** */
                 else if (request.method.equalsIgnoreCase("SETUP")) {
+                    Log.d(TAG,"in the SRTUP method");
                     Pattern p;
                     Matcher m;
                     int p2, p1, ssrc, trackId, src[];
@@ -617,7 +616,7 @@ public class RtspServer extends Service{
 
         public void send(OutputStream output) throws IOException {
             int seqid = -1;
-
+            Log.d(TAG,"RTSP Server is sending!");
             try {
                 seqid = Integer.parseInt(mRequest.headers.get("cseq").replace(" ",""));
             } catch (Exception e) {
@@ -631,10 +630,9 @@ public class RtspServer extends Service{
                     attributes +
                     "\r\n" +
                     content;
-
             Log.d(TAG,response.replace("\r", ""));
-
             output.write(response.getBytes());
+            Log.d(TAG,"send method is over!");
         }
     }
 

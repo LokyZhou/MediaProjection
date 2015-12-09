@@ -48,10 +48,11 @@ public class Session {
     private Handler mHandler;
     private static CountDownLatch sSignal;
     private static Handler sHandler;
+
     static {
         // Creates the Thread that will be used when asynchronous methods of a Session are called
         sSignal = new CountDownLatch(1);
-        new HandlerThread("net.majorkernelpanic.streaming.Session"){
+        new HandlerThread("com.example.zzr.mediaprojection.Session"){
             @Override
             protected void onLooperPrepared() {
                 sHandler = new Handler();
@@ -59,10 +60,10 @@ public class Session {
             }
         }.start();
     }
+
     public Session() {
         long uptime = System.currentTimeMillis();
-
-        HandlerThread thread = new HandlerThread("net.majorkernelpanic.streaming.Session");
+        HandlerThread thread = new HandlerThread("com.example.zzr.mediaprojection.Session");
         thread.start();
 
         mHandler = new Handler(thread.getLooper());
@@ -162,8 +163,7 @@ public class Session {
             IOException {
 
         for (int id=0;id<2;id++) {
-            Stream stream = id==0 ? (Stream) mAudioStream : mVideoStream; //TODO:the mAudioStream may be wrong.
-
+            Stream stream = id==0 ? (Stream) mAudioStream : mVideoStream;
             if (stream!=null && !stream.isStreaming()) {
                 try {
                     stream.configure();
@@ -184,6 +184,7 @@ public class Session {
         }
         postSessionConfigured();
     }
+
     private void postError(final int reason, final int streamType,final Exception e) {
         mMainHandler.post(new Runnable() {
             @Override

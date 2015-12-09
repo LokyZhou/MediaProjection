@@ -27,7 +27,8 @@ import java.net.InetAddress;
 import java.util.Random;
 
 public class MainActivity extends Activity {
-    private static final int PERMISSION_CODE = 1;
+    protected static final int PERMISSION_CODE = 1;
+    protected static final String START_MEDIARECORDER = "start_mediarecorder";
     private int mScreenDensity;
     private MediaRecorder mMediaRecorder;
     private MediaProjectionManager mProjectionManager;
@@ -68,14 +69,14 @@ public class MainActivity extends Activity {
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         mScreenDensity = metrics.densityDpi;
         mMediaRecorder = new MediaRecorder();
-        prepareRecorder();
+//        prepareRecorder();
         try {
             createSockets();
         } catch (IOException e) {
             finish();
             e.printStackTrace();
         }
-        initRecorder();
+//        initRecorder();
         mProjectionManager = (MediaProjectionManager)getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         mToggleButton = (ToggleButton)findViewById(R.id.toggleButton);
         mToggleButton.setOnClickListener(new View.OnClickListener() {
@@ -98,7 +99,7 @@ public class MainActivity extends Activity {
 
 //        if (sPipeApi == PIPE_API_LS) {
             Log.e(TAG, "in the createSockets");
-            final String LOCAL_ADDR = "net.majorkernelpanic.streaming-";
+            final String LOCAL_ADDR = "com.example.zzr.mediaprojection-";
 
             for (int i=0;i<10;i++) {
                 try {
@@ -142,8 +143,8 @@ public class MainActivity extends Activity {
         mMediaProjection.stop();
         Log.v(TAG, "Recording Stopped");
         stopScreenSharing();
-        initRecorder();
-        prepareRecorder();
+//        initRecorder();
+//        prepareRecorder();
         }
     }
 
@@ -154,7 +155,7 @@ public class MainActivity extends Activity {
         mVirtualDisplay.release();
     }
 
-    public void shareScreen() throws IOException {
+    public  void shareScreen() throws IOException {
         if(mMediaProjection == null)
         {
             startActivityForResult(mProjectionManager.createScreenCaptureIntent(),PERMISSION_CODE);
@@ -165,7 +166,6 @@ public class MainActivity extends Activity {
 //        InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(mParcelRead);
         getH264Stream();//delete the head of mp4 stream
         /* put h264 stream to rtsp server*/
-
     }
 
     public void getH264Stream() throws IOException {
@@ -288,6 +288,21 @@ public class MainActivity extends Activity {
             Log.i(TAG, "MediaProjection Stopped");
         }
     }
-
+//    class Myhandler extends Handler {
+//        public Myhandler(Looper looper)
+//        {
+//            super(looper);
+//        }
+//        public void handleMessage(Message msg){
+//            super.handleMessage(msg);
+//            if((String)msg.obj == START_MEDIARECORDER);
+//            try {
+//                shareScreen();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//    }
 
 }

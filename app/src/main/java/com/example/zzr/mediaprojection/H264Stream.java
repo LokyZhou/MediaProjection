@@ -23,7 +23,7 @@ public class H264Stream extends VideoStream{
 //  Constructs ths H.264 stream.
     public H264Stream() {
         mMimeType = "video/avc";
-        mCameraImageFormat = ImageFormat.NV21;
+//        mCameraImageFormat = ImageFormat.NV21;
         mVideoEncoder = MediaRecorder.VideoEncoder.H264;
         mPacketizer = new H264Packetizer();
     }
