@@ -145,7 +145,6 @@ public class SenderReport {
 		setLong(mPacketCount, 20, 24);
 		setLong(mOctetCount, 24, 28);
 	}
-
 	public void setDestination(InetAddress dest, int dport) {
 		mTransport = RtpSocket.TRANSPORT_UDP;
 		mPort = dport;

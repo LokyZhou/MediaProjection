@@ -85,6 +85,8 @@ public class SessionBuilder
             video.setVideoQuality(mVideoQuality);
             video.setPreviewOrientation(mOrientation);
             video.setDestinationPorts(5006);
+
+
         }
 
 

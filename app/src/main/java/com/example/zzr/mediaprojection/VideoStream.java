@@ -1,15 +1,19 @@
 package com.example.zzr.mediaprojection;
 
 import android.content.SharedPreferences;
+import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
-import android.media.projection.MediaProjectionManager;
+import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.util.Base64;
 import android.util.Log;
 
 import com.example.zzr.mediaprojection.exceptions.ConfNotSupportedException;
+import com.example.zzr.mediaprojection.exceptions.StorageUnavailableException;
 
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,12 +24,10 @@ import java.io.InputStream;
 public class VideoStream extends MediaStream
 {
     private VirtualDisplay mVirtualDisplay;
-    private int mScreenDensity;
-    protected MediaRecorder mMediaRecorder;
-    private MediaProjectionManager mProjectionManager;
-    private MainActivity.MediaProjectionCallback mMediaProjectionCallback;
-    private MediaProjection mMediaProjection;
+    private int mScreenDensity =560;
+    private MediaProjection mMediaProjection = MainActivity.getmMediaProjection();
     private MP4Config mConfig;
+    private DisplayManager displayManager;
     protected int mRtpPort = 0, mRtcpPort = 0;
     protected String mMimeType;
     protected String mEncoderName;
@@ -40,19 +42,19 @@ public class VideoStream extends MediaStream
     private boolean flag = false;
     public synchronized String getSessionDescription() throws IllegalStateException{
         if (mConfig == null) throw new IllegalStateException("You need to call configure() first !");
-        return "m=video "+String.valueOf(getDestinationPorts()[0])+" RTP/AVP 96\r\n" +
+
+        String result = "m=video "+String.valueOf(getDestinationPorts()[0])+" RTP/AVP 96\r\n" +
                 "a=rtpmap:96 H264/90000\r\n" +
                 "a=fmtp:96 packetization-mode=1;profile-level-id="+mConfig.getProfileLevel()+";sprop-parameter-sets="+mConfig.getB64SPS()+","+mConfig.getB64PPS()+";\r\n";
-
-    }
-    public  int[] getDestinationPorts() {
-        return new int[] {
-                mRtpPort,
-                mRtcpPort
-        };
+        Log.d(TAG,result);
+        return result;
     }
 
-    
+    public VideoStream() {
+        mMimeType = "video/avc";
+        mVideoEncoder = MediaRecorder.VideoEncoder.H264;
+        mPacketizer = new H264Packetizer();
+    }
 //
 //    public void onActivityResult(int requestCode, int resultCode, Intent data) {
 //        if (requestCode != PERMISSION_CODE) {
@@ -82,24 +84,15 @@ public class VideoStream extends MediaStream
             Log.d(TAG, "Video encoded using the MediaRecorder API");
             // We need a local socket to forward data output by the camera to the packetizer
             createSockets();
-//        if(mMediaProjection == null)
-//        {
-//            startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
-//            return;
-//        }
-//        mVirtualDisplay = createVirtualDisplay();
-//        mMediaRecorder.start();
             try {
-
                 mMediaRecorder = new MediaRecorder();
                 mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
                 mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-                mMediaRecorder.setVideoEncoder(mVideoEncoder);
-                mMediaRecorder.setVideoSize(mConfig.DISPLAY_WIDTH, mConfig.DISPLAY_HEIGHT);
-                mMediaRecorder.setVideoFrameRate(60);
-
+                mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
+                mMediaRecorder.setVideoSize(MP4Config.DISPLAY_WIDTH, MP4Config.DISPLAY_HEIGHT);
+                mMediaRecorder.setVideoFrameRate(30);
                 // The bandwidth actually consumed is often above what was requested
-                mMediaRecorder.setVideoEncodingBitRate(10000000);
+                mMediaRecorder.setVideoEncodingBitRate(5000000);
 
                 // We write the output of the camera in a local socket instead of a file !
                 // This one little trick makes streaming feasible quiet simply: data from the camera
@@ -112,6 +105,7 @@ public class VideoStream extends MediaStream
                 }
                 mMediaRecorder.setOutputFile(fd);
                 mMediaRecorder.prepare();
+                createVirtualDisplay();
                 mMediaRecorder.start();
 
             } catch (Exception e) {
@@ -142,10 +136,135 @@ public class VideoStream extends MediaStream
             }
 
             // The packetizer encapsulates the bit stream in an RTP stream and send it over the network
+            if(mRtpPort ==0 || mRtcpPort ==0){
+                mRtpPort = Config.rtpport;
+                mRtcpPort = Config.rtcpport;
+            }
+            mPacketizer.setDestination(mDestination,mRtpPort,mRtcpPort);
             mPacketizer.setInputStream(is);
             mPacketizer.start();
             mStreaming = true;
 
+    }
+    public synchronized void configure() throws IllegalStateException, IOException {
+        super.configure();
+        mMode = MODE_MEDIARECORDER_API;
+        mQuality = mRequestedQuality.clone();
+        mConfig = testH264();
+    }
+
+    private MP4Config testH264() throws IOException {
+        String key = PREF_PREFIX + "h264-mr-" + mRequestedQuality.framerate + "," + mRequestedQuality.resX + "," + mRequestedQuality.resY;
+        Log.d("RtspServer", "in the test the key is " + key);
+        if (mSettings != null) {
+            Log.d("RtspServer", "return setting MP4");
+            if (mSettings.contains(key)) {
+                String[] s = mSettings.getString(key, "").split(",");
+                return new MP4Config(s[0], s[1], s[2]);
+            }
+        }
+        final String TESTFILE = Environment.getExternalStorageDirectory().getPath() + "/spydroid-test.mp4";
+        Log.i(TAG, "Testing H264 support... Test file saved at: " + TESTFILE);
+        try {
+            File file = new File(TESTFILE);
+            file.createNewFile();
+        } catch (IOException e) {
+            throw new StorageUnavailableException(e.getMessage());
+        }
+
+
+        try {
+            mMediaRecorder = new MediaRecorder();
+            mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+            mMediaRecorder.setVideoEncoder(mVideoEncoder);
+            mMediaRecorder.setVideoSize(MP4Config.DISPLAY_WIDTH, MP4Config.DISPLAY_HEIGHT);
+            mMediaRecorder.setVideoFrameRate(mRequestedQuality.framerate);
+            mMediaRecorder.setVideoEncodingBitRate((int) (mRequestedQuality.bitrate * 0.8));
+            mMediaRecorder.setOutputFile(TESTFILE);
+            mMediaRecorder.setMaxDuration(3000);
+
+            // We wait a little and stop recording
+            mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {
+                public void onInfo(MediaRecorder mr, int what, int extra) {
+                    Log.d(TAG, "MediaRecorder callback called !");
+                    if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_DURATION_REACHED) {
+                        Log.d(TAG, "MediaRecorder: MAX_DURATION_REACHED");
+                    } else if (what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED) {
+                        Log.d(TAG, "MediaRecorder: MAX_FILESIZE_REACHED");
+                    } else if (what == MediaRecorder.MEDIA_RECORDER_INFO_UNKNOWN) {
+                        Log.d(TAG, "MediaRecorder: INFO_UNKNOWN");
+                    } else {
+                        Log.d(TAG, "WTF ?");
+                    }
+                }
+            });
+     //       mProjectionManager=(MediaProjectionManager)getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+     //       mProjectionManager = (MediaProjectionManager)getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+            // Start recording
+            mMediaRecorder.prepare();
+            startrecorder();
+            mMediaRecorder.start();
+        } catch (IOException e) {
+            throw new ConfNotSupportedException(e.getMessage());
+        } catch (RuntimeException e) {
+            throw new ConfNotSupportedException(e.getMessage());
+        } finally {
+            try {
+                if (mMediaRecorder != null) {
+                    //设置后不会崩
+                    mMediaRecorder.setOnErrorListener(null);
+                    mMediaRecorder.setPreviewDisplay(null);
+                    Log.d("RtspServer","进行设置！");
+                }
+                wait(1000);//TODO：时间过短导致stop方法错误，后续需要优化；
+                mMediaRecorder.stop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            mMediaRecorder.reset();
+            mMediaRecorder.release();
+            mMediaRecorder = null;
+//            mMediaProjection.stop();
+            Log.d("RtspServer",""+mVirtualDisplay);
+//            mVirtualDisplay.release();
+//            mMediaProjection.stop();
+
+        }
+
+        // Retrieve SPS & PPS & ProfileId with MP4Config
+        MP4Config config = new MP4Config(TESTFILE);
+        byte[] sps= Base64.decode(config.getB64SPS(),Base64.NO_WRAP);
+        byte[] pps=Base64.decode(config.getB64PPS(),Base64.NO_WRAP);
+        mPacketizer.setStreamParameters(pps,sps);
+        Config.pps=config.getB64PPS();
+        // Delete dummy video
+        File file = new File(TESTFILE);
+        if (!file.delete()) Log.e(TAG, "Temp file could not be erased");
+        Log.i(TAG, "H264 Test succeded...");
+
+        // Save test result
+        if (mSettings != null) {
+            SharedPreferences.Editor editor = mSettings.edit();
+            editor.putString(key, config.getProfileLevel() + "," + config.getB64SPS() + "," + config.getB64PPS());
+            editor.commit();
+        }
+
+        return config;
+    }
+    private void startrecorder() {
+        //TODO create Virtual Display
+        mVirtualDisplay = createVirtualDisplay();
+    }
+    private VirtualDisplay createVirtualDisplay() {
+        if(mMediaProjection == null)
+        {
+            Log.d(TAG,"mMediaProjection is null");
+        }
+        return mMediaProjection.createVirtualDisplay("VideoStream",
+                MP4Config.DISPLAY_WIDTH, MP4Config.DISPLAY_HEIGHT, mScreenDensity,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                mMediaRecorder.getSurface(), null /*Callbacks*/, null /*Handler*/);
     }
     @Override
     protected void encodeWithMediaCodec() throws IOException {

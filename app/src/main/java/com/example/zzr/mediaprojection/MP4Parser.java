@@ -217,7 +217,6 @@ class StsdBox {
 		 *  </pre>
 		 */
 		try {
-
 			// TODO: Here we assume that numOfSequenceParameterSets = 1, numOfPictureParameterSets = 1 !
 			// Here we extract the SPS parameter
 			fis.skipBytes(7);

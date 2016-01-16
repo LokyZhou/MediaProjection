@@ -75,11 +75,11 @@ public abstract class MediaStream implements Stream {
 	protected final static byte sPipeApi;
 	
 	protected boolean mStreaming = false, mConfigured = false;
-	protected int mRtpPort = 0, mRtcpPort = 0; 
+	public int mRtpPort , mRtcpPort ;
 	protected byte mChannelIdentifier = 0;
 	protected OutputStream mOutputStream = null;
 	protected InetAddress mDestination;
-	
+
 	protected ParcelFileDescriptor[] mParcelFileDescriptors;
 	protected ParcelFileDescriptor mParcelRead;
 	protected ParcelFileDescriptor mParcelWrite;
@@ -115,8 +115,8 @@ public abstract class MediaStream implements Stream {
 	}
 
 	public MediaStream() {
-		mRequestedMode = sSuggestedMode;
-		mMode = sSuggestedMode;
+		mRequestedMode = MODE_MEDIARECORDER_API;
+		mMode = MODE_MEDIARECORDER_API;
 	}
 
 	/** 
@@ -142,6 +142,7 @@ public abstract class MediaStream implements Stream {
 		} else {
 			mRtpPort = dport;
 			mRtcpPort = dport+1;
+			Log.d(TAG,"mRtpPort = "+mRtpPort +"  mRtcpPort = " + mRtcpPort);
 		}
 	}
 
@@ -182,8 +183,8 @@ public abstract class MediaStream implements Stream {
 	 **/
 	public int[] getDestinationPorts() {
 		return new int[] {
-				mRtpPort,
-				mRtcpPort
+				Config.rtpport,
+				Config.rtcpport
 		};
 	}
 
@@ -261,9 +262,10 @@ public abstract class MediaStream implements Stream {
 		if (mDestination==null)
 			throw new IllegalStateException("No destination ip address set for the stream !");
 
-		if (mRtpPort<=0 || mRtcpPort<=0)
+		if (mRtpPort<=0 || mRtcpPort<=0) {
+			Log.d("RtspServer","in the MediaStream Start , the mRtpPort is "+mRtpPort);
 			throw new IllegalStateException("No destination ports set for the stream !");
-
+		}
 		mPacketizer.setTimeToLive(mTTL);
 		
 		if (mMode != MODE_MEDIARECORDER_API) {

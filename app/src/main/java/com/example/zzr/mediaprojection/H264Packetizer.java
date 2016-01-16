@@ -17,7 +17,7 @@ public class H264Packetizer implements Runnable{
     private Thread t = null;
     private int naluLength = 0;
     private long delay = 0, oldtime = 0;
-    private byte[] sps = null, pps = null, stapa = null;
+    private byte[] sps =  null, pps = null, stapa = null;
     byte[] header = new byte[5];
     private int count = 0;
     private int streamType = 1;
@@ -32,6 +32,7 @@ public class H264Packetizer implements Runnable{
         int ssrc = new Random().nextInt();
         ts = new Random().nextInt();
         socket = new RtpSocket();
+        Log.d(TAG,"in the pack SSRC is "+ssrc);
         socket.setSSRC(ssrc);
         socket.setClockFrequency(90000);
     }
@@ -42,6 +43,7 @@ public class H264Packetizer implements Runnable{
             t.start();
         }
     }
+
     public void setInputStream(InputStream is) {
         this.is = is;
     }
@@ -58,9 +60,6 @@ public class H264Packetizer implements Runnable{
     }
     public void setDestination(InetAddress dest, int rtpPort, int rtcpPort) {
         socket.setDestination(dest, rtpPort, rtcpPort);
-    }
-    protected void send(int length) throws IOException {
-        socket.commitBuffer(length);
     }
     public void setTimeToLive(int ttl) throws IOException {
         socket.setTimeToLive(ttl);
@@ -139,8 +138,8 @@ public class H264Packetizer implements Runnable{
     public void setStreamParameters(byte[] pps, byte[] sps) {
         this.pps = pps;
         this.sps = sps;
-
-        // A STAP-A NAL (NAL type 24) containing the sps and pps of the stream
+        Log.d(TAG,"sps is "+sps+"PPs "+ pps);
+//        // A STAP-A NAL (NAL type 24) containing the sps and pps of the stream
         if (pps != null && sps != null) {
             // STAP-A NAL header + NALU 1 (SPS) size + NALU 2 (PPS) size = 5 bytes
             stapa = new byte[sps.length + pps.length + 5];
@@ -169,6 +168,8 @@ public class H264Packetizer implements Runnable{
      */
     @Override
     public void run() {
+//        sps = Base64.decode(Config.sps,Base64.NO_WRAP);
+//        pps = Base64.decode(Config.pps,Base64.NO_WRAP);
         long duration = 0;
         Log.d(TAG, "H264 packetizer started !");
         stats.reset();
@@ -176,7 +177,7 @@ public class H264Packetizer implements Runnable{
 
 
             streamType = 0;
-            socket.setCacheSize(400);
+            socket.setCacheSize(800);
         try {
             while (!Thread.interrupted()) {
                 oldtime = System.nanoTime();
@@ -197,20 +198,17 @@ public class H264Packetizer implements Runnable{
     }
 
     private void send() throws IOException, InterruptedException {
-        int sum = 1, len = 0, type;
-
-        if (streamType == 0) {
+        int sum = 1, len = 0, type = 0;
+        Log.d(TAG,"streamType is "+ streamType + "sps" + sps + "pps" + pps);
             // NAL units are preceeded by their length, we parse the length
-            fill(header,0,5);
+        if(streamType == 0) {
+            fill(header, 0, 5);
             ts += delay;
-            naluLength = header[3]&0xFF | (header[2]&0xFF)<<8 | (header[1]&0xFF)<<16 | (header[0]&0xFF)<<24;
-            if (naluLength>100000 || naluLength<0) resync();
-        }
-
+            naluLength = header[3] & 0xFF | (header[2] & 0xFF) << 8 | (header[1] & 0xFF) << 16 | (header[0] & 0xFF) << 24;
+            if (naluLength > 100000 || naluLength < 0) resync();
+        }else
         // Parses the NAL unit type
         type = header[4]&0x1F;
-
-
         // The stream already contains NAL unit type 7 or 8, we don't need
         // to add them to the stream ourselves
         if (type == 7 || type == 8) {
@@ -232,7 +230,7 @@ public class H264Packetizer implements Runnable{
             socket.commitBuffer(rtphl + stapa.length);
         }
 
-        //Log.d(TAG,"- Nal unit length: " + naluLength + " delay: "+delay/1000000+" type: "+type);
+        Log.d(TAG,"- Nal unit length: " + naluLength + " delay: "+delay/1000000+" type: "+type);
 
         // Small NAL unit => Single NAL unit
         if (naluLength<=MAXPACKETSIZE-rtphl-2) {
@@ -242,7 +240,7 @@ public class H264Packetizer implements Runnable{
             socket.updateTimestamp(ts);
             socket.markNextPacket();
             socket.commitBuffer(naluLength+rtphl);
-            //Log.d(TAG,"----- Single NAL unit - len:"+len+" delay: "+delay);
+            Log.d(TAG,"----- Single NAL unit - len:"+len+" delay: "+delay );
         }
         // Large NAL unit => Split nal unit
         else {
@@ -286,33 +284,31 @@ public class H264Packetizer implements Runnable{
     }
     private void resync() throws IOException {
         int type;
-
         Log.e(TAG,"Packetizer out of sync ! Let's try to fix that...(NAL length: "+naluLength+")");
-
-        while (true) {
-
-            header[0] = header[1];
-            header[1] = header[2];
-            header[2] = header[3];
-            header[3] = header[4];
-            header[4] = (byte) is.read();
-
-            type = header[4]&0x1F;
-
-            if (type == 5 || type == 1) {
-                naluLength = header[3]&0xFF | (header[2]&0xFF)<<8 | (header[1]&0xFF)<<16 | (header[0]&0xFF)<<24;
-                if (naluLength>0 && naluLength<100000) {
-                    oldtime = System.nanoTime();
-                    Log.e(TAG,"A NAL unit may have been found in the bit stream !");
-                    break;
-                }
-                if (naluLength==0) {
-                    Log.e(TAG,"NAL unit with NULL size found...");
-                } else if (header[3]==0xFF && header[2]==0xFF && header[1]==0xFF && header[0]==0xFF) {
-                    Log.e(TAG,"NAL unit with 0xFFFFFFFF size found...");
-                }
-            }
-        }
+//        while (true) {
+//
+//            header[0] = header[1];
+//            header[1] = header[2];
+//            header[2] = header[3];
+//            header[3] = header[4];
+//            header[4] = (byte) is.read();
+//
+//            type = header[4]&0x1F;
+//
+//            if (type == 5 || type == 1) {
+//                naluLength = header[3]&0xFF | (header[2]&0xFF)<<8 | (header[1]&0xFF)<<16 | (header[0]&0xFF)<<24;
+//                if (naluLength>0 && naluLength<100000) {
+//                    oldtime = System.nanoTime();
+//                    Log.e(TAG,"A NAL unit may have been found in the bit stream !");
+//                    break;
+//                }
+//                if (naluLength==0) {
+//                    Log.e(TAG,"NAL unit with NULL size found...");
+//                } else if (header[3]==0xFF && header[2]==0xFF && header[1]==0xFF && header[0]==0xFF) {
+//                    Log.e(TAG,"NAL unit with 0xFFFFFFFF size found...");
+//                }
+//            }
+//        }
 
     }
 }

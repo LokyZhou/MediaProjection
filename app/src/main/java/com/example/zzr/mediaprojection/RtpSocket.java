@@ -49,7 +49,7 @@ public class RtpSocket implements Runnable {
 	
 	public static final int RTP_HEADER_LENGTH = 12;
 	public static final int MTU = 1300;
-
+	int i=1;
 	private MulticastSocket mSocket;
 	private DatagramPacket[] mPackets;
 	private byte[][] mBuffers;
@@ -68,8 +68,9 @@ public class RtpSocket implements Runnable {
 	private int mBufferCount, mBufferIn, mBufferOut;
 	private int mCount = 0;
 	private byte mTcpHeader[];
+	private int mTTL = 0;
 	protected OutputStream mOutputStream = null;
-	
+
 	private AverageBitrate mAverageBitrate;
 
 	/**
@@ -163,6 +164,8 @@ public class RtpSocket implements Runnable {
 	/** Sets the Time To Live of the UDP packets. */
 	public void setTimeToLive(int ttl) throws IOException {
 		mSocket.setTimeToLive(ttl);
+		mTTL = ttl;
+		Log.d(TAG,"in the RtpSocket, the ttl is set to " + ttl);
 	}
 
 	/** Sets the destination address and to which the packets will be sent. */
@@ -170,6 +173,7 @@ public class RtpSocket implements Runnable {
 		if (dport != 0 && rtcpPort != 0) {
 			mTransport = TRANSPORT_UDP;
 			mPort = dport;
+			Log.e(TAG,"dest is "+dest + " dport is " + dport + "rtcpPort = " + rtcpPort);
 			for (int i=0;i<mBufferCount;i++) {
 				mPackets[i].setPort(dport);
 				mPackets[i].setAddress(dest);
@@ -276,15 +280,17 @@ public class RtpSocket implements Runnable {
 		try {
 			// Caches mCacheSize milliseconds of the stream in the FIFO.
 			Thread.sleep(mCacheSize);
+			Log.d(TAG, "packets are sending one by one");
 			long delta = 0;
 			while (mBufferCommitted.tryAcquire(4,TimeUnit.SECONDS)) {
+				Log.d(TAG,"the tryAcquire is true");
 				if (mOldTimestamp != 0) {
 					// We use our knowledge of the clock rate of the stream and the difference between two timestamps to
 					// compute the time lapse that the packet represents.
 					if ((mTimestamps[mBufferOut]-mOldTimestamp)>0) {
 						stats.push(mTimestamps[mBufferOut]-mOldTimestamp);
 						long d = stats.average()/1000000;
-						//Log.d(TAG,"delay: "+d+" d: "+(mTimestamps[mBufferOut]-mOldTimestamp)/1000000);
+						Log.d(TAG,"delay: "+d+" d: "+(mTimestamps[mBufferOut]-mOldTimestamp)/1000000);
 						// We ensure that packets are sent at a constant and suitable rate no matter how the RtpSocket is used.
 						if (mCacheSize>0) Thread.sleep(d);
 					} else if ((mTimestamps[mBufferOut]-mOldTimestamp)<0) {
@@ -298,13 +304,21 @@ public class RtpSocket implements Runnable {
 				}
 				mReport.update(mPackets[mBufferOut].getLength(), (mTimestamps[mBufferOut]/100L)*(mClock/1000L)/10000L);
 				mOldTimestamp = mTimestamps[mBufferOut];
-				if (mCount++>30) {
-					if (mTransport == TRANSPORT_UDP) {
-						mSocket.send(mPackets[mBufferOut]);
-					} else {
-						sendTCP();
-					}
-				}
+				Log.d(TAG,"the mOldTimeStamp is " + mOldTimestamp);
+//				if (mCount++>30) {
+//					if (mTransport == TRANSPORT_UDP) {
+//						Log.e(TAG,"the"+i+"package");
+//						mSocket.send(mPackets[mBufferOut]);
+//						i++;
+//					} else {
+//						Log.d(TAG,"the " + i +"package in the TCP");
+//						sendTCP();
+//					}
+//				}
+				Log.e(TAG,"the"+i+"package");
+				mSocket.send(mPackets[mBufferOut],(byte)mTTL);
+//				sendTCP();
+				i++;
 				if (++mBufferOut>=mBufferCount) mBufferOut = 0;
 				mBufferRequested.release();
 			}
@@ -443,8 +457,10 @@ public class RtpSocket implements Runnable {
 		public long average() {
 			long l = (long)m-2000000;
 			return l>0 ? l : 0;
+
 		}
 
 	}
+
 
 }

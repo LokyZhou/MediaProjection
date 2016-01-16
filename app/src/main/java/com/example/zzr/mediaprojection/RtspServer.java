@@ -343,6 +343,7 @@ public class RtspServer extends Service{
                 if (request != null) {
                     try {
                         response = processRequest(request);
+                        Log.e(TAG,""+request.toString());
                     }
                     catch (Exception e) {
                         // This alerts the main thread that something has gone wrong in this thread
@@ -371,7 +372,7 @@ public class RtspServer extends Service{
                 postMessage(MESSAGE_STREAMING_STOPPED);
             }
             mSession.release();
-
+            Log.e(TAG,"shut down session");
             try {
                 mClient.close();
             } catch (IOException ignore) {}
@@ -398,6 +399,9 @@ public class RtspServer extends Service{
                     // Parse the requested URI and configure the session
                     mSession = handleRequest(request.uri, mClient);
                     mSessions.put(mSession, null);
+                    VideoStream stream = new VideoStream();
+                    stream.setDestinationAddress(mClient.getInetAddress());
+                    mSession.addVideoTrack(stream);
                     mSession.syncConfigure();
                     String requestContent = mSession.getSessionDescription();
                     String requestAttributes =
@@ -440,7 +444,7 @@ public class RtspServer extends Service{
                     }
 
                     trackId = Integer.parseInt(m.group(1));
-
+                    Log.v(TAG,"trackId is "+trackId);
                     if (!mSession.trackExists(trackId)) {
                         response.status = Response.STATUS_NOT_FOUND;
                         return response;
@@ -457,19 +461,30 @@ public class RtspServer extends Service{
                         p1 = Integer.parseInt(m.group(1));
                         p2 = Integer.parseInt(m.group(2));
                     }
-
+                    if(p1 == 0 || p2 == 0){
+                        p1 = Config.rtpport;
+                        p2 = Config.rtcpport;
+                    }else{
+                        Config.rtpport = p1;
+                        Config.rtcpport = p2;
+                    }
                     ssrc = mSession.getTrack(trackId).getSSRC();
                     src = mSession.getTrack(trackId).getLocalPorts();
                     destination = mSession.getDestination();
+                    Log.d(TAG,"dest should be " + destination);
+                    Log.d(TAG, "first the rtpport is " + p1 + " the rtcpport is " + p2);
+                    if(p1 ==0 || p2==0){
 
-                    mSession.getTrack(trackId).setDestinationPorts(p1, p2);
-
+                    }else {
+                        mSession.getTrack(trackId).setDestinationPorts(p1, p2);
+                    }
+                    Log.d(TAG,"in the server,the ports are set to"+String.valueOf(mSession.getTrack(trackId).getDestinationPorts()[0]));
                     boolean streaming = isStreaming();
                     mSession.syncStart(trackId);
                     if (!streaming && isStreaming()) {
                         postMessage(MESSAGE_STREAMING_STARTED);
                     }
-
+                    Log.d(TAG, "the rtpport is " + p1 + " the rtcpport is " + p2);
                     response.attributes = "Transport: RTP/AVP/UDP;" + (InetAddress.getByName(destination).isMulticastAddress() ? "multicast" : "unicast") +
                             ";destination=" + mSession.getDestination() +
                             ";client_port=" + p1 + "-" + p2 +
@@ -515,6 +530,7 @@ public class RtspServer extends Service{
                 /* ********************************************************************************** */
                 else if (request.method.equalsIgnoreCase("TEARDOWN")) {
                     response.status = Response.STATUS_OK;
+                    Log.e(TAG,"in the TEARDOWN ");
                 }
 
                 /* ********************************************************************************** */
@@ -586,7 +602,6 @@ public class RtspServer extends Service{
 
             // It's not an error, it's just easier to follow what's happening in logcat with the request in red
             Log.e(TAG,request.method+" "+request.uri);
-
             return request;
         }
     }
@@ -616,7 +631,6 @@ public class RtspServer extends Service{
 
         public void send(OutputStream output) throws IOException {
             int seqid = -1;
-            Log.d(TAG,"RTSP Server is sending!");
             try {
                 seqid = Integer.parseInt(mRequest.headers.get("cseq").replace(" ",""));
             } catch (Exception e) {
@@ -632,7 +646,6 @@ public class RtspServer extends Service{
                     content;
             Log.d(TAG,response.replace("\r", ""));
             output.write(response.getBytes());
-            Log.d(TAG,"send method is over!");
         }
     }
 

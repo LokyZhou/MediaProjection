@@ -65,8 +65,8 @@ public class VideoQuality {
 		this.resY = resY;
 	}
 
-	public int framerate = 0;
-	public int bitrate = 0;
+	public int framerate = 30;
+	public int bitrate = 8000000;
 	public int resX = 0;
 	public int resY = 0;
 

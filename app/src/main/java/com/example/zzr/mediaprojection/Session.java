@@ -4,6 +4,7 @@ import android.net.rtp.AudioStream;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.util.Log;
 
 import com.example.zzr.mediaprojection.exceptions.CameraInUseException;
 import com.example.zzr.mediaprojection.exceptions.ConfNotSupportedException;
@@ -161,12 +162,14 @@ public class Session {
             throws
             RuntimeException,
             IOException {
-
+        Log.d(TAG,"in the syncConfigure");
         for (int id=0;id<2;id++) {
             Stream stream = id==0 ? (Stream) mAudioStream : mVideoStream;
             if (stream!=null && !stream.isStreaming()) {
                 try {
+                    Log.d("RtspServer","in the syncConfigure ,id = "+id);
                     stream.configure();
+                    Log.d("RtspServer","in the syncConfigure ,id = "+id + "is over");
                 }  catch (StorageUnavailableException e) {
                     postError(ERROR_STORAGE_NOT_READY , id, e);
                     throw e;
@@ -250,6 +253,7 @@ public class Session {
         });
     }
     public void release() {
+        mVideoStream.stop();
         removeVideoTrack();
         sHandler.getLooper().quit();
     }
@@ -279,7 +283,7 @@ public class Session {
         });
     }
     /**
-     * Does the same thing as {@link #start()}, but in a syncronous manner.
+     * Does the same thing as {@link #start()}, but in a synchronous manner.
      * Throws exceptions in addition to calling a callback.
      **/
     public void syncStart()
@@ -305,6 +309,7 @@ public class Session {
 
         Stream stream = id==0 ? (Stream) mAudioStream : mVideoStream;
         if (stream!=null && !stream.isStreaming()) {
+            Log.d(TAG,"in the syncStart");
             try {
                 InetAddress destination =  InetAddress.getByName(mDestination);
                 stream.setTimeToLive(mTimeToLive);
@@ -314,7 +319,7 @@ public class Session {
                     postSessionStarted();
                 }
                 if (getTrack(1-id) == null || !getTrack(1-id).isStreaming()) {
-                    sHandler.post(mUpdateBitrate);
+//                    sHandler.post(mUpdateBitrate);
                 }
             } catch (UnknownHostException e) {
                 postError(ERROR_UNKNOWN_HOST, id, e);
@@ -333,7 +338,6 @@ public class Session {
                 throw e;
             }
         }
-
     }
     private void postSessionStarted() {
         mMainHandler.post(new Runnable() {

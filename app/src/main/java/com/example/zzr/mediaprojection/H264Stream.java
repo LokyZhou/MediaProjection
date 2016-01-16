@@ -3,13 +3,14 @@ package com.example.zzr.mediaprojection;
 
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
-import android.graphics.ImageFormat;
 import android.media.MediaRecorder;
 import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
+
 import com.example.zzr.mediaprojection.exceptions.ConfNotSupportedException;
 import com.example.zzr.mediaprojection.exceptions.StorageUnavailableException;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -25,7 +26,7 @@ public class H264Stream extends VideoStream{
         mMimeType = "video/avc";
 //        mCameraImageFormat = ImageFormat.NV21;
         mVideoEncoder = MediaRecorder.VideoEncoder.H264;
-        mPacketizer = new H264Packetizer();
+
     }
     /**
      * Returns a description of the stream using SDP. It can then be included in an SDP file.
@@ -42,8 +43,8 @@ public class H264Stream extends VideoStream{
     public synchronized void start() throws IllegalStateException, IOException {
         if (!mStreaming) {
             configure();
-            byte[] pps = Base64.decode(mConfig.getB64PPS(), Base64.NO_WRAP);
-            byte[] sps = Base64.decode(mConfig.getB64SPS(), Base64.NO_WRAP);
+            byte[] pps = Base64.decode(Config.pps, Base64.NO_WRAP);
+            byte[] sps = Base64.decode(Config.sps, Base64.NO_WRAP);
             mPacketizer.setStreamParameters(pps, sps);
             super.start();
         }
@@ -105,15 +106,6 @@ public class H264Stream extends VideoStream{
         } catch (IOException e) {
             throw new StorageUnavailableException(e.getMessage());
         }
-
-
-
-
-
-
-
-
-
         try {
 
             mMediaRecorder = new MediaRecorder();

@@ -72,6 +72,8 @@ public class MP4Config {
 		}
 
 		// We find the stsdBox
+		if(mp4Parser.getStsdBox() == null)
+			Log.d("RtspServer","getStsdBox is null");
 		stsdBox = mp4Parser.getStsdBox();
 		mPPS = stsdBox.getB64PPS();
 		mSPS = stsdBox.getB64SPS();
