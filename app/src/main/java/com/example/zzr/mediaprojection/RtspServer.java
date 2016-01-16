@@ -302,7 +302,7 @@ public class RtspServer extends Service{
     // One thread per client
     class WorkerThread extends Thread implements Runnable {
 
-        
+
         private final Socket mClient;
         private final OutputStream mOutput;
         private final BufferedReader mInput;
