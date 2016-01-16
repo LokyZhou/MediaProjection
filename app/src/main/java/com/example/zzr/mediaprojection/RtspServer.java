@@ -363,7 +363,6 @@ public class RtspServer extends Service{
                     Log.e(TAG,"Response was not sent properly");
                     break;
                 }
-
             }
 
             // Streaming stops when client disconnects
@@ -377,9 +376,7 @@ public class RtspServer extends Service{
             try {
                 mClient.close();
             } catch (IOException ignore) {}
-
             Log.i(TAG, "Client disconnected");
-
         }
 
         public Response processRequest(Request request) throws IllegalStateException, IOException {
