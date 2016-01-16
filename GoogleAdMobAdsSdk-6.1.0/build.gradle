@@ -1,0 +1,2 @@
+configurations.create("default")
+artifacts.add("default", file('GoogleAdMobAdsSdk-6.1.0.jar'))
