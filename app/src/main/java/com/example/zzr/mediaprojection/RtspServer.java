@@ -35,7 +35,7 @@ public class RtspServer extends Service{
 
     /** The server name that will appear in responses. */
     public static String SERVER_NAME = "LokyZhou RTSP Server";
-
+    private static Context mcontext;
     /** Port used by default. */
     public static final int DEFAULT_RTSP_PORT = 8086;
 
@@ -74,6 +74,11 @@ public class RtspServer extends Service{
 
     public RtspServer() {
     }
+
+    public static void setContext(Context context) {
+        mcontext = context;
+    }
+
     public interface CallbackListener {
 
         /** Called when an error occurs. */
@@ -344,7 +349,6 @@ public class RtspServer extends Service{
                 if (request != null) {
                     try {
                         response = processRequest(request);
-                        Log.e(TAG,""+request.toString());
                     }
                     catch (Exception e) {
                         // This alerts the main thread that something has gone wrong in this thread
@@ -363,7 +367,6 @@ public class RtspServer extends Service{
                     Log.e(TAG,"Response was not sent properly");
                     break;
                 }
-
             }
 
             // Streaming stops when client disconnects
@@ -377,9 +380,7 @@ public class RtspServer extends Service{
             try {
                 mClient.close();
             } catch (IOException ignore) {}
-
             Log.i(TAG, "Client disconnected");
-
         }
 
         public Response processRequest(Request request) throws IllegalStateException, IOException {
@@ -401,6 +402,7 @@ public class RtspServer extends Service{
                     mSession = handleRequest(request.uri, mClient);
                     mSessions.put(mSession, null);
                     VideoStream stream = new VideoStream();
+                    stream.setPreferences(PreferenceManager.getDefaultSharedPreferences(mcontext));
                     stream.setDestinationAddress(mClient.getInetAddress());
                     mSession.addVideoTrack(stream);
                     mSession.syncConfigure();

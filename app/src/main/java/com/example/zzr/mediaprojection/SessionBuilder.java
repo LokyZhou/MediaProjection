@@ -68,9 +68,6 @@ public class SessionBuilder
         session.setDestination(mDestination);
         session.setTimeToLive(mTimeToLive);
         session.setCallback(mCallback);
-
-
-
         switch (mVideoEncoder) {
             case VIDEO_H264:
                 H264Stream stream = new H264Stream();
