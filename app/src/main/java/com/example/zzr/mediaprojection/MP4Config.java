@@ -36,6 +36,7 @@ public class MP4Config {
 	private MP4Parser mp4Parser;
 	private String mProfilLevel, mPPS, mSPS;
 
+
 	public MP4Config(String profil, String sps, String pps) {
 		mProfilLevel = profil; 
 		mPPS = pps; 

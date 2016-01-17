@@ -84,6 +84,7 @@ public class MainActivity extends Activity {
 //        mWakeLock = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "com.example.zzr.mediaprojection.wakelock");
         this.startService(new Intent(this,RtspServer.class));
         shareScreen();
+        RtspServer.setContext(getApplicationContext());
         SessionBuilder.getInstance().build();
     }
     protected void createSockets() throws IOException {

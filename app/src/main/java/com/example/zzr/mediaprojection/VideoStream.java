@@ -40,6 +40,7 @@ public class VideoStream extends MediaStream
     protected int mRequestedOrientation = 0, mOrientation = 0;
     protected VideoQuality mQuality = mRequestedQuality.clone();
     private boolean flag = false;
+
     public synchronized String getSessionDescription() throws IllegalStateException{
         if (mConfig == null) throw new IllegalStateException("You need to call configure() first !");
 
@@ -55,29 +56,7 @@ public class VideoStream extends MediaStream
         mVideoEncoder = MediaRecorder.VideoEncoder.H264;
         mPacketizer = new H264Packetizer();
     }
-//
-//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        if (requestCode != PERMISSION_CODE) {
-//            Log.e(TAG, "Unknown request code: " + requestCode);
-//            return;
-//        }
-//        if (resultCode != RESULT_OK) {
-// //           Toast.makeText(this, "Screen Cast Permission Denied", Toast.LENGTH_SHORT).show();
-//            Log.d(TAG,"Screen Cast Permission Denied");
-//            flag=false;
-//            return;
-//        }
-//        mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
-//        mMediaProjection.registerCallback(mMediaProjectionCallback, null);
-//        mVirtualDisplay = createVirtualDisplay();
-//        mMediaRecorder.start();
-//    }
-//    private VirtualDisplay createVirtualDisplay() {
-//        return mMediaProjection.createVirtualDisplay("MainActivity",
-//                MP4Config.DISPLAY_WIDTH, MP4Config.DISPLAY_HEIGHT, mScreenDensity,
-//                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-//                mMediaRecorder.getSurface(), null /*Callbacks*/, null /*Handler*/);
-//    }
+
     @Override
     protected void encodeWithMediaRecorder() throws IOException {
 
@@ -245,6 +224,7 @@ public class VideoStream extends MediaStream
 
         // Save test result
         if (mSettings != null) {
+            Log.d(TAG,"save the test result");
             SharedPreferences.Editor editor = mSettings.edit();
             editor.putString(key, config.getProfileLevel() + "," + config.getB64SPS() + "," + config.getB64PPS());
             editor.commit();
@@ -273,6 +253,7 @@ public class VideoStream extends MediaStream
 
     public void setPreferences(SharedPreferences prefs) {
         mSettings = prefs;
+        Log.d(TAG,"set the mSetting");
     }
     public void setVideoQuality(VideoQuality videoQuality) {
         if (!mRequestedQuality.equals(videoQuality)) {
