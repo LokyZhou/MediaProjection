@@ -177,7 +177,7 @@ public class H264Packetizer implements Runnable{
 
 
             streamType = 0;
-            socket.setCacheSize(800);
+            socket.setCacheSize(1200);
         try {
             while (!Thread.interrupted()) {
                 oldtime = System.nanoTime();

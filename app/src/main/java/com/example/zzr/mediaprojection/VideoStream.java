@@ -66,9 +66,9 @@ public class VideoStream extends MediaStream
             try {
                 mMediaRecorder = new MediaRecorder();
                 mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-                mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+                mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
                 mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-                mMediaRecorder.setVideoSize(MP4Config.DISPLAY_WIDTH, MP4Config.DISPLAY_HEIGHT);
+                mMediaRecorder.setVideoSize(1080, 1920);
                 mMediaRecorder.setVideoFrameRate(30);
                 // The bandwidth actually consumed is often above what was requested
                 mMediaRecorder.setVideoEncodingBitRate(5000000);
@@ -135,13 +135,13 @@ public class VideoStream extends MediaStream
     private MP4Config testH264() throws IOException {
         String key = PREF_PREFIX + "h264-mr-" + mRequestedQuality.framerate + "," + mRequestedQuality.resX + "," + mRequestedQuality.resY;
         Log.d("RtspServer", "in the test the key is " + key);
-        if (mSettings != null) {
-            Log.d("RtspServer", "return setting MP4");
-            if (mSettings.contains(key)) {
-                String[] s = mSettings.getString(key, "").split(",");
-                return new MP4Config(s[0], s[1], s[2]);
-            }
-        }
+//        if (mSettings != null) {
+//            Log.d("RtspServer", "return setting MP4");
+//            if (mSettings.contains(key)) {
+//                String[] s = mSettings.getString(key, "").split(",");
+//                return new MP4Config(s[0], s[1], s[2]);
+//            }
+//        }
         final String TESTFILE = Environment.getExternalStorageDirectory().getPath() + "/spydroid-test.mp4";
         Log.i(TAG, "Testing H264 support... Test file saved at: " + TESTFILE);
         try {
@@ -156,12 +156,12 @@ public class VideoStream extends MediaStream
             mMediaRecorder = new MediaRecorder();
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
             mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-            mMediaRecorder.setVideoEncoder(mVideoEncoder);
+            mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
             mMediaRecorder.setVideoSize(MP4Config.DISPLAY_WIDTH, MP4Config.DISPLAY_HEIGHT);
             mMediaRecorder.setVideoFrameRate(mRequestedQuality.framerate);
-            mMediaRecorder.setVideoEncodingBitRate((int) (mRequestedQuality.bitrate * 0.8));
+            mMediaRecorder.setVideoEncodingBitRate(5000000);
             mMediaRecorder.setOutputFile(TESTFILE);
-            mMediaRecorder.setMaxDuration(3000);
+
 
             // We wait a little and stop recording
             mMediaRecorder.setOnInfoListener(new MediaRecorder.OnInfoListener() {

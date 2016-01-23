@@ -272,17 +272,18 @@ public class MainActivity extends Activity {
     public class MediaProjectionCallback extends MediaProjection.Callback {
         @Override
         public void onStop() {
-            if (mToggleButton.isChecked()) {
-                mToggleButton.setChecked(false);
-                mMediaRecorder.stop();
-                mMediaRecorder.reset();
-                Log.v(TAG, "Recording Stopped");
-//                initRecorder();
-                prepareRecorder();
-            }
+//            if (mToggleButton.isChecked()) {
+//                mToggleButton.setChecked(false);
+//                mMediaRecorder.stop();
+//                mMediaRecorder.reset();
+//                Log.v(TAG, "Recording Stopped");
+////                initRecorder();
+//                prepareRecorder();
+//            }
             mMediaProjection = null;
             stopScreenSharing();
             Log.i(TAG, "MediaProjection Stopped");
+
         }
     }
 //    class Myhandler extends Handler {
@@ -301,9 +302,6 @@ public class MainActivity extends Activity {
 //        }
 //
 //    }
-    public static MediaRecorder meida_getInstance(){
-        return mMediaRecorder;
-    }
 
     public static MediaProjection getmMediaProjection(){
         return mMediaProjection;

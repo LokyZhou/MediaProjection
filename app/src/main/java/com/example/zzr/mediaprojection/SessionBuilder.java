@@ -25,7 +25,7 @@ public class SessionBuilder
     // Default configuration
     private VideoQuality mVideoQuality = VideoQuality.DEFAULT_VIDEO_QUALITY;
     private Context mContext;
-    private int mVideoEncoder = VIDEO_H263;
+    private int mVideoEncoder = VIDEO_H264;
     private int mTimeToLive = 64;
     private int mOrientation = 0;
     private boolean mFlash = false;
