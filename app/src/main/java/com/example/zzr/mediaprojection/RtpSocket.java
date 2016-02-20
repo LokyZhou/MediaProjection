@@ -316,7 +316,8 @@ public class RtpSocket implements Runnable {
 //					}
 //				}
 				Log.e(TAG,"the"+i+"package");
-				mSocket.send(mPackets[mBufferOut],(byte)mTTL);
+//				mSocket.send(mPackets[mBufferOut],(byte)mTTL);
+				mSocket.send(mPackets[mBufferOut]);
 //				sendTCP();
 				i++;
 				if (++mBufferOut>=mBufferCount) mBufferOut = 0;
