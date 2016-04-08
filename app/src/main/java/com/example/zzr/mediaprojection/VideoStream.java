@@ -248,7 +248,7 @@ public class VideoStream extends MediaStream
     }
     @Override
     protected void encodeWithMediaCodec() throws IOException {
-    Log.v(TAG,"using ecodeWithMediaCodec !!! WTF");
+    Log.v(TAG,"using encodeWithMediaCodec !!! WTF");
     }
 
     public void setPreferences(SharedPreferences prefs) {

@@ -17,6 +17,38 @@
             </intent-filter>
         </activity>
         <service android:name="com.example.zzr.mediaprojection.RtspServer" />
+        <service android:name=".ftp.FsService" />
+        <service android:name="com.example.zzr.mediaprojection.ftp.NsdService" />
+        <receiver
+            android:name="com.example.zzr.mediaprojection.ftp.NsdService$StartStopReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="be.ppareit.swiftp.FTPSERVER_STARTED" />
+                <action android:name="be.ppareit.swiftp.FTPSERVER_STOPPED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="com.example.zzr.mediaprojection.ftp.FsWidgetProvider"
+            android:exported="false"
+            android:icon="@mipmap/ic_launcher"
+            android:label="@string/swiftp_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="be.ppareit.swiftp.FTPSERVER_STARTED" />
+                <action android:name="be.ppareit.swiftp.FTPSERVER_STOPPED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+        <receiver
+            android:name="com.example.zzr.mediaprojection.ftp.RequestStartStopReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="be.ppareit.swiftp.ACTION_START_FTPSERVER" />
+                <action android:name="be.ppareit.swiftp.ACTION_STOP_FTPSERVER" />
+            </intent-filter>
+        </receiver>
     </application>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
@@ -28,4 +60,6 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 </manifest>

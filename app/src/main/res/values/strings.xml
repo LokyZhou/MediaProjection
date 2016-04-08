@@ -3,4 +3,12 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="swiftp_name">FTP Server</string>
+    <string name="nsd_servername_postfix">FTP Server</string>
+    <string name="notif_server_starting">Starting at %s</string>
+    <string name="notif_title">FTP Server is running</string>
+    <string name="notif_text">at %s</string>
+    <string name="notif_stop_text">Stop server</string>
+    <string name="notif_settings_text">Settings</string>
+    <string name="storage_warning">Warning: storage is not available. You may want to unmount it.</string>
 </resources>

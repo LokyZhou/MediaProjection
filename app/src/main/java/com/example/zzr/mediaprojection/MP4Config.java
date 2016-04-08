@@ -31,8 +31,8 @@ import java.io.IOException;
 public class MP4Config {
 
 	public final static String TAG = "MP4Config";
-	public static final  int DISPLAY_WIDTH = 1080;
-	public static final  int DISPLAY_HEIGHT = 1920;
+	public static final  int DISPLAY_WIDTH = 1080	;
+	public static final  int DISPLAY_HEIGHT = 1920	;
 	private MP4Parser mp4Parser;
 	private String mProfilLevel, mPPS, mSPS;
 

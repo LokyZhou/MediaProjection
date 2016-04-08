@@ -21,6 +21,8 @@ import android.view.View;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.example.zzr.mediaprojection.ftp.FsService;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -46,7 +48,7 @@ public class MainActivity extends Activity {
     protected H264Packetizer mPacketizer = null;
     private static VideoStream mVideoStream;
     protected static ArrayList<Socket> socketList = new ArrayList<Socket>();
-
+    public static Context mcontext = null;
     public static VideoStream getInstance()
     {
         if (mVideoStream == null)
@@ -62,6 +64,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        this.mcontext = this.getApplication();
         mMediaRecorder = new MediaRecorder();
         mProjectionManager = (MediaProjectionManager)getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         new Thread(){
@@ -74,18 +77,25 @@ public class MainActivity extends Activity {
             }
         }.start();
         mMediaProjectionCallback=new MediaProjectionCallback();
-        this.startService(new Intent(this,RtspServer.class));
+        startFtpServer();
+        this.startService(new Intent(this, RtspServer.class));
         shareScreen();
         RtspServer.setContext(getApplicationContext());
         SessionBuilder.getInstance().build();
+
     }
-/*
- * set the control port is 8088
- * start the TCP Server
- */
+
+    private void startFtpServer() {
+        sendBroadcast(new Intent(FsService.ACTION_START_FTPSERVER));
+    }
+
+    /*
+     * set the control port is 8088
+     * start the TCP Server
+     */
     public void StartListenerSocket() throws IOException{
         ServerSocket ss = new ServerSocket(8088);
-        Toast.makeText(getApplicationContext(), "TCP Server is ready", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "TCP Server is ready", Toast.LENGTH_SHORT).show();
         while(true){
             Socket socket = ss.accept();
             Toast.makeText(getApplicationContext(),"client is connected",Toast.LENGTH_SHORT).show();
