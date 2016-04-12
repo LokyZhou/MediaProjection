@@ -36,7 +36,7 @@ abstract public class Util {
     final static String TAG = Util.class.getSimpleName();
     public static int port = 2121;
     public static String Chrootdir = "/storage/emulated/0";
-    public static String UserName = "123";
+//    public static String UserName = "123";
     public static String Password = "123";
     public static byte byteOfInt(int value, int which) {
         int shift = which * 8;

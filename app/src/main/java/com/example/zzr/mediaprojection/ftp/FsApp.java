@@ -43,10 +43,7 @@ public class FsApp extends Application {
      * @return the Context of this application
      */
     public static Context getAppContext() {
-        if (sContext == null) {
-            Log.e(TAG, "Global context not set");
-        }
-        return sContext;
+        return MainActivity.mcontext;
     }
 
     /**

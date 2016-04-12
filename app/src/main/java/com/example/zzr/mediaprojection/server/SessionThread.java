@@ -384,6 +384,7 @@ public class SessionThread extends Thread {
     }
 
     public File getWorkingDir() {
+        workingDir = Util.getChrootDir();
         return workingDir;
     }
 

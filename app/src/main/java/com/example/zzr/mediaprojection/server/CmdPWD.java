@@ -44,6 +44,7 @@ public class CmdPWD extends FtpCmd implements Runnable {
         // user-visible path (inside the chroot directory).
         try {
             String currentDir = sessionThread.getWorkingDir().getCanonicalPath();
+            Log.d("FTP",Util.Chrootdir);
             currentDir = currentDir.substring(Util.getChrootDir().getCanonicalPath()
                     .length());
             // The root directory requires special handling to restore its

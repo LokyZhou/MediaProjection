@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceScreen
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:key="Add Account"
+        android:title="Add Account"
+        android:summary="" >
+        <PreferenceCategory
+            android:key="settings"
+            android:title="@string/user_label" >
+            <EditTextPreference
+                android:key="username"
+                android:title="@string/username_label" />
+            <EditTextPreference
+                android:key="password"
+                android:title="@string/password_label"
+                android:inputType="textPassword" />
+            <CheckBoxPreference
+                android:id="@+id/showpassword"
+                android:key="show_password"
+                android:title="@string/show_password_label"
+                android:defaultValue="@string/show_password_default" />
+            <Preference
+                android:key="chrootDir"
+                android:title="@string/chroot_label" />
+            <Preference
+                android:key="register"
+                android:title="@string/register"/>
+        </PreferenceCategory>
+    </PreferenceScreen>
+</PreferenceScreen>

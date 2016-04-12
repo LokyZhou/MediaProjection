@@ -22,6 +22,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.example.zzr.mediaprojection.ftp.FsService;
+import com.example.zzr.mediaprojection.ftp.Setting;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -64,7 +65,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
-        this.mcontext = this.getApplication();
+        this.mcontext = this.getApplication().getApplicationContext();
         mMediaRecorder = new MediaRecorder();
         mProjectionManager = (MediaProjectionManager)getSystemService(Context.MEDIA_PROJECTION_SERVICE);
         new Thread(){
@@ -179,6 +180,8 @@ public class MainActivity extends Activity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(this,Setting.class);
+            startActivity(intent);
             return true;
         }
 

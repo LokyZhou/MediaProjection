@@ -287,7 +287,7 @@ public class FsService extends Service implements Runnable {
         }
         // TODO: next if block could probably be removed
         if (isConnectedUsingWifi() == true) {
-            Context context = FsApp.getAppContext();
+            Context context = MainActivity.mcontext;
             WifiManager wm = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             int ipAddress = wm.getConnectionInfo().getIpAddress();
             if (ipAddress == 0)
@@ -362,7 +362,8 @@ public class FsService extends Service implements Runnable {
      * @return true if connected using wifi
      */
     public static boolean isConnectedUsingWifi() {
-        Context context = FsApp.getAppContext();
+        Context context = MainActivity.mcontext;
+
         ConnectivityManager cm = (ConnectivityManager) context
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = cm.getActiveNetworkInfo();

@@ -19,9 +19,16 @@ along with SwiFTP.  If not, see <http://www.gnu.org/licenses/>.
 
 package com.example.zzr.mediaprojection.server;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.example.zzr.mediaprojection.MainActivity;
 import com.example.zzr.mediaprojection.ftp.Util;
+
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
 
 public class CmdPASS extends FtpCmd implements Runnable {
@@ -44,8 +51,24 @@ public class CmdPASS extends FtpCmd implements Runnable {
             sessionThread.writeString("503 Must send USER first\r\n");
             return;
         }
-        String username = Util.UserName;
-        String password = Util.Password;
+        SharedPreferences sharedPreferences = MainActivity.mcontext.getSharedPreferences("FTP", Context.MODE_PRIVATE);
+
+        String username = attemptUsername;
+        Set<String> set1 = new TreeSet<>();
+        Set<String> set2 = new TreeSet<>();
+        set2.add("");
+        set2.add("");
+        set1 = sharedPreferences.getStringSet(username,set2);
+        Iterator<String> it = set1.iterator();
+        String password = it.next();
+        Util.Password = password;
+        Util.Chrootdir = it.next();
+        if(Util.Password.startsWith("/")){
+            String tmp = Util.Chrootdir;
+            Util.Chrootdir = Util.Password;
+            Util.Password = tmp;
+                    }
+        Log.d("FTP",Util.Password +"\n"+ Util.Chrootdir);
         if (username == null || password == null) {
             Log.e(TAG, "Username or password misconfigured");
             sessionThread.writeString("500 Internal error during authentication");

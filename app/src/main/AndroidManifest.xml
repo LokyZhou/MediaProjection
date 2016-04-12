@@ -49,6 +49,15 @@
                 <action android:name="be.ppareit.swiftp.ACTION_STOP_FTPSERVER" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name="com.example.zzr.mediaprojection.ftp.FsNotification"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="be.ppareit.swiftp.FTPSERVER_STARTED" />
+                <action android:name="be.ppareit.swiftp.FTPSERVER_STOPPED" />
+            </intent-filter>
+        </receiver>
+        <activity android:name=".ftp.Setting"></activity>
     </application>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
