@@ -2,6 +2,7 @@ package com.example.zzr.mediaprojection.ftp;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -29,6 +30,12 @@ public class Setting extends PreferenceActivity implements
     private String TAG = "ftp";
     private EditTextPreference password = null;
     private static String Password = null;
+    private EditTextPreference ftp_port;
+    private CheckBoxPreference ftp_status = null;
+    private EditTextPreference rtsp_port;
+    private CheckBoxPreference rtsp_status = null;
+    private EditTextPreference http_port;
+    private CheckBoxPreference http_status = null;
     @Override
     public void onCreate(Bundle savedInstanceState){
         Log.d(TAG, "created");
@@ -92,7 +99,7 @@ public class Setting extends PreferenceActivity implements
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 String newpassword = password.getText();
                 password.setSummary(transformPassword(newpassword, false));
-                return  true;
+                return true;
             }
         });
         Preference register = (Preference)findPreference("register");
@@ -110,6 +117,78 @@ public class Setting extends PreferenceActivity implements
                 return false;
             }
         });
+        ftp_port = (EditTextPreference)findPreference("ftpport");
+        ftp_port.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                int ftp_port = Integer.valueOf(newValue.toString());
+                if(ftp_port<=65535&&ftp_port>=1){
+                    Util.port = ftp_port;
+                    sendBroadcast(new Intent(FsService.ACTION_STOP_FTPSERVER));
+                    try {
+                        Thread.sleep(1000);  //进行Ftp服务关闭处理
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    sendBroadcast(new Intent(FsService.ACTION_START_FTPSERVER));
+                    return  true;
+                }else{
+                    Toast.makeText(MainActivity.mcontext,"端口号输入错误",Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            }
+        });
+        ftp_status = (CheckBoxPreference)findPreference("start_ftp");
+        ftp_status.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.mcontext);
+                Boolean status = true;
+                status = sp.getBoolean("start_ftp",status);
+                if(status){
+                    sendBroadcast(new Intent(FsService.ACTION_STOP_FTPSERVER));
+                    Toast.makeText(MainActivity.mcontext,"Ftp服务器关闭",Toast.LENGTH_LONG).show();
+                }else{
+                    sendBroadcast(new Intent(FsService.ACTION_START_FTPSERVER));
+                    Toast.makeText(MainActivity.mcontext,"Ftp服务器开启",Toast.LENGTH_LONG).show();
+                }
+                return true;
+            }
+        });
+        rtsp_port = (EditTextPreference)findPreference("RTSP_port");
+        rtsp_port.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                int rtsp_port = Integer.valueOf(newValue.toString());
+                if(rtsp_port<=65535&&rtsp_port>=1) {
+                    MainActivity.RTSP_PORT = rtsp_port;
+                    return  true;
+                }else{
+                    Toast.makeText(MainActivity.mcontext,"端口号输入错误",Toast.LENGTH_LONG).show();
+                    return false;
+                }
+            }
+        });
+        rtsp_status = (CheckBoxPreference)findPreference("RTSP");
+        rtsp_status.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.mcontext);
+                Boolean status = Boolean.TRUE;
+                status = sp.getBoolean("RTSP",status);
+                if(status){
+                    sendBroadcast(new Intent(MainActivity.ACTION_RTSP_STOP));
+                    Toast.makeText(MainActivity.mcontext,"RTSP服务器关闭",Toast.LENGTH_LONG);
+                }else{
+                    sendBroadcast(new Intent(MainActivity.ACTION_RTSP_START));
+                    Toast.makeText(MainActivity.mcontext,"RTSP服务器打开",Toast.LENGTH_LONG).show();
+                }
+                return true;
+            }
+        });
+
+
+
     }
     public static boolean setChrootDir(String dir) {
         File chrootTest = new File(dir);

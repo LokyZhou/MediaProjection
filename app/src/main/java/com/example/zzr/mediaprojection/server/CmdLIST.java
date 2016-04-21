@@ -38,7 +38,7 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
 
     // The approximate number of milliseconds in 6 months
     public final static long MS_IN_SIX_MONTHS = 6L * 30L * 24L * 60L * 60L * 1000L;
-    private final String input;
+    private  String input;
 
     public CmdLIST(SessionThread sessionThread, String input) {
         super(sessionThread, input);
@@ -50,7 +50,12 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
         String errString = null;
 
         mainblock: {
+            Log.d(TAG,"CMDinput="+FtpCmd.input);
+            input = FtpCmd.input;
             String param = getParameter(input);
+            if(!input.equals("I")){
+                param=input;
+            }
             Log.d(TAG, "LIST parameter: " + param);
             while (param.startsWith("-")) {
                 // Skip all dashed -args, if present
@@ -65,6 +70,7 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
                     errString = "550 LIST does not support wildcards\r\n";
                     break mainblock;
                 }
+                Log.d(TAG,"In the cmdlist param="+param);
                 fileToList = new File(sessionThread.getWorkingDir(), param);
                 if (violatesChroot(fileToList)) {
                     errString = "450 Listing target violates chroot\r\n";
@@ -72,6 +78,7 @@ public class CmdLIST extends CmdAbstractListing implements Runnable {
                 }
             }
             String listing;
+            Log.d(TAG,"fileToList"+fileToList.toString());
             if (fileToList.isDirectory()) {
                 StringBuilder response = new StringBuilder();
                 errString = listDirectory(response, fileToList);

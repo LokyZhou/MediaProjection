@@ -30,7 +30,7 @@ import java.lang.reflect.Constructor;
 
 public abstract class FtpCmd implements Runnable {
     private static final String TAG = FtpCmd.class.getSimpleName();
-
+    public static String input = null;
     protected SessionThread sessionThread;
 
     protected static CmdMap[] cmdClasses = { new CmdMap("SYST", CmdSYST.class),
@@ -71,6 +71,17 @@ public abstract class FtpCmd implements Runnable {
     protected static void dispatchCommand(SessionThread session, String inputString) {
         String[] strings = inputString.split(" ");
         String unrecognizedCmdMsg = "502 Command not recognized\r\n";
+        if(strings.length >=2){
+            if(strings[1] != null){
+            input = strings[1];
+            Log.d(TAG,"input ="+input);
+                Log.d(TAG,"string[1]"+strings[1]);
+                if (strings[1].startsWith("\"/\"/")) {
+                    Log.e(TAG,"in the if");
+                    String str=strings[1].substring(4);
+                    inputString = strings[0]+" "+str;
+                }
+        }}
         if (strings == null) {
             // There was some egregious sort of parsing error
             String errString = "502 Command parse error\r\n";
@@ -101,6 +112,7 @@ public abstract class FtpCmd implements Runnable {
                 // subclass. Yes, I'm serious.
                 Constructor<? extends FtpCmd> constructor;
                 try {
+
                     constructor = cmdClasses[i].getCommand().getConstructor(
                             new Class[] { SessionThread.class, String.class });
                 } catch (NoSuchMethodException e) {
@@ -172,6 +184,7 @@ public abstract class FtpCmd implements Runnable {
         if (!silent) {
             Log.d(TAG, "Parsed argument: " + retString);
         }
+
         return retString;
     }
 

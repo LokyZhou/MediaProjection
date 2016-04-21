@@ -91,7 +91,7 @@ public class FsNotification extends BroadcastReceiver {
 
         int preferenceIcon = android.R.drawable.ic_menu_preferences;
         CharSequence preferenceText = context.getString(R.string.notif_settings_text);
-        Intent preferenceIntent = new Intent(context, MainActivity.class);
+        Intent preferenceIntent = new Intent(context, Setting.class);
         preferenceIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent preferencePendingIntent = PendingIntent.getActivity(context, 0, preferenceIntent, 0);
 

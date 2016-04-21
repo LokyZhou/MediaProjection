@@ -11,8 +11,8 @@ import android.media.projection.MediaProjectionManager;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
 import android.os.Bundle;
-import android.os.Message;
 import android.os.Handler;
+import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -34,6 +34,8 @@ public class MainActivity extends Activity {
     protected static final int PERMISSION_CODE = 1;
     protected static final String START_MEDIARECORDER = "start_mediarecorder";
     protected static int TEST = 0X000000;
+    public static String ACTION_RTSP_START = "zzr.server.rtsp.start";
+    public static String ACTION_RTSP_STOP = "zzr.server.rtsp.stop";
     public static final int socket_msg = 0x123;
     protected static MediaRecorder mMediaRecorder;
     private MediaProjectionManager mProjectionManager;
@@ -50,6 +52,7 @@ public class MainActivity extends Activity {
     private static VideoStream mVideoStream;
     protected static ArrayList<Socket> socketList = new ArrayList<Socket>();
     public static Context mcontext = null;
+    public static int RTSP_PORT = 8088;
     public static VideoStream getInstance()
     {
         if (mVideoStream == null)
@@ -58,7 +61,6 @@ public class MainActivity extends Activity {
         }
         return mVideoStream;
     }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,7 +81,7 @@ public class MainActivity extends Activity {
         }.start();
         mMediaProjectionCallback=new MediaProjectionCallback();
         startFtpServer();
-        this.startService(new Intent(this, RtspServer.class));
+//        this.startService(new Intent(this, RtspServer.class));
         shareScreen();
         RtspServer.setContext(getApplicationContext());
         SessionBuilder.getInstance().build();
@@ -95,7 +97,7 @@ public class MainActivity extends Activity {
      * start the TCP Server
      */
     public void StartListenerSocket() throws IOException{
-        ServerSocket ss = new ServerSocket(8088);
+        ServerSocket ss = new ServerSocket(RTSP_PORT);
 //        Toast.makeText(this, "TCP Server is ready", Toast.LENGTH_SHORT).show();
         while(true){
             Socket socket = ss.accept();
@@ -187,6 +189,8 @@ public class MainActivity extends Activity {
 
         return super.onOptionsItemSelected(item);
     }
+
+
 
 
     public class MediaProjectionCallback extends MediaProjection.Callback {

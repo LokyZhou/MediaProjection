@@ -28,4 +28,29 @@
                 android:title="@string/register"/>
         </PreferenceCategory>
     </PreferenceScreen>
+    <EditTextPreference
+        android:key="ftpport"
+        android:title="@string/ftp_port"
+        />
+    <CheckBoxPreference
+        android:key="start_ftp"
+        android:title="@string/start_ftp"
+        android:id="@+id/startftp"
+        android:defaultValue="true"/>
+    <EditTextPreference
+        android:key="RTSP_port"
+        android:title="@string/RTSP_PORT"/>
+    <CheckBoxPreference
+        android:key="RTSP"
+        android:title="@string/RTSP"
+        android:id="@+id/rtsp"
+        android:defaultValue="false"/>
+    <EditTextPreference
+        android:key="HTTP_port"
+        android:title="@string/HTTP_PORT"/>
+    <CheckBoxPreference
+        android:key="HTTP"
+        android:title="@string/HTTP"
+        android:id="@+id/http"
+        android:defaultValue="true"/>
 </PreferenceScreen>

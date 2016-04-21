@@ -40,6 +40,9 @@ public class CmdCWD extends FtpCmd implements Runnable {
         String param = getParameter(input);
         File newDir;
         String errString = null;
+//        if(param.startsWith(""/"/")){
+//            param = param.substring(4);
+//        }
         mainblock: {
             newDir = inputPathToChrootedFile(sessionThread.getWorkingDir(), param);
 

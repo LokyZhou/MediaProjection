@@ -8,7 +8,9 @@ import android.util.Log;
 import android.view.Gravity;
 import android.widget.Toast;
 
+import com.example.zzr.mediaprojection.MainActivity;
 import com.example.zzr.mediaprojection.R;
+import com.example.zzr.mediaprojection.RtspServer;
 
 public class RequestStartStopReceiver extends BroadcastReceiver {
 
@@ -29,6 +31,11 @@ public class RequestStartStopReceiver extends BroadcastReceiver {
             } else if (intent.getAction().equals(FsService.ACTION_STOP_FTPSERVER)) {
                 Intent serverService = new Intent(context, FsService.class);
                 context.stopService(serverService);
+            }else if(intent.getAction().equals(MainActivity.ACTION_RTSP_START)){
+                context.startService(new Intent(context, RtspServer.class));
+            }else if(intent.getAction().equals(MainActivity.ACTION_RTSP_STOP)){
+                context.stopService(new Intent(context,RtspServer.class));
+
             }
         } catch (Exception e) {
             Log.e(TAG, "Failed to start/stop on intent " + e.getMessage());

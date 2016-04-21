@@ -47,6 +47,8 @@
             <intent-filter>
                 <action android:name="be.ppareit.swiftp.ACTION_START_FTPSERVER" />
                 <action android:name="be.ppareit.swiftp.ACTION_STOP_FTPSERVER" />
+                <action android:name="zzr.server.rtsp.start" />
+                <action android:name="zzr.server.rtsp.stop" />
             </intent-filter>
         </receiver>
         <receiver
@@ -57,6 +59,7 @@
                 <action android:name="be.ppareit.swiftp.FTPSERVER_STOPPED" />
             </intent-filter>
         </receiver>
+
         <activity android:name=".ftp.Setting"></activity>
     </application>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>

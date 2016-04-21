@@ -21,4 +21,11 @@
     <string name="storage_warning">Warning: storage is not available. You may want to unmount it.</string>
     <string name="chroot_label">设置根目录</string>
     <string name="cancel">取消</string>
+    <string name="ftp_port">Ftp服务器端口号</string>
+    <string name="start_ftp">开启Ftp服务器</string>
+    <string name="RTSP_PORT">RTSP端口号设置</string>
+    <string name="RTSP">开启RTSP服务器</string>
+    <string name="HTTP_PORT">HTTP端口号设置</string>
+    <string name="HTTP">开启HTTP服务器</string>
+
 </resources>
